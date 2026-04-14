@@ -22,7 +22,7 @@ jobs:
 
       - name: Install backend deps
         working-directory: server
-        run: npm ci
+        run: npm install --no-audit --no-fund
 
       - name: Setup env
         working-directory: server
@@ -70,7 +70,7 @@ jobs:
 
       - name: Install frontend deps
         working-directory: client
-        run: npm ci
+        run: npm install --no-audit --no-fund
 
       - name: Lint
         working-directory: client
