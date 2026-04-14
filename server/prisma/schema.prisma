@@ -1,0 +1,193 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id                  String    @id @default(uuid())
+  email               String    @unique
+  passwordHash        String
+  name                String
+  role                String    @default("USER") // USER, SUPERVISOR
+  phone               String?
+  monthlyIncome       Float?
+  monthlyFixedExp     Float?
+  isActive            Boolean   @default(true)
+  failedLoginAttempts Int       @default(0)
+  lockoutUntil        DateTime?
+  resetToken          String?   @unique
+  resetTokenExpiresAt DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  supervisorPairing Pairing?      @relation("SupervisorPairing")
+  userPairing       Pairing?      @relation("UserPairing")
+  categories        Category[]
+  debts             Debt[]
+  transactions      Transaction[] @relation("UserTransactions")
+  reviewedTxns      Transaction[] @relation("ReviewerTransactions")
+  repaymentPlans    RepaymentPlan[]
+  budgets           Budget[]
+  notifications     Notification[]
+  auditLogs         AuditLog[]
+  refreshTokens     RefreshToken[]
+}
+
+model Pairing {
+  id           String    @id @default(uuid())
+  supervisorId String    @unique
+  userId       String?   @unique
+  inviteCode   String    @unique
+  status       String    @default("PENDING") // PENDING, ACTIVE, DISSOLVED
+  pairedAt     DateTime?
+  dissolvedAt  DateTime?
+  createdAt    DateTime  @default(now())
+
+  supervisor User  @relation("SupervisorPairing", fields: [supervisorId], references: [id])
+  user       User? @relation("UserPairing", fields: [userId], references: [id])
+}
+
+model Category {
+  id        String   @id @default(uuid())
+  name      String
+  type      String   // INCOME, EXPENSE
+  isSystem  Boolean  @default(false)
+  userId    String?
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  owner        User?         @relation(fields: [userId], references: [id])
+  transactions Transaction[]
+  budgets      Budget[]
+}
+
+model Debt {
+  id             String   @id @default(uuid())
+  userId         String
+  name           String
+  creditor       String
+  originalAmount Float
+  currentBalance Float
+  monthlyDue     Float
+  dueDay         Int
+  status         String   @default("ACTIVE") // ACTIVE, PAID_OFF, PAUSED
+  isDeleted      Boolean  @default(false)
+  note           String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user         User          @relation(fields: [userId], references: [id])
+  transactions Transaction[]
+  planItems    PlanItem[]
+}
+
+model Transaction {
+  id            String    @id @default(uuid())
+  userId        String
+  date          DateTime
+  type          String    // INCOME, EXPENSE, REPAYMENT
+  amount        Float
+  categoryId    String
+  debtId        String?
+  description   String?
+  attachmentUrl String?
+  status        String    @default("PENDING") // PENDING, APPROVED, REJECTED
+  reviewNote    String?
+  reviewedAt    DateTime?
+  reviewedBy    String?
+  version       Int       @default(1)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  user     User      @relation("UserTransactions", fields: [userId], references: [id])
+  reviewer User?     @relation("ReviewerTransactions", fields: [reviewedBy], references: [id])
+  category Category  @relation(fields: [categoryId], references: [id])
+  debt     Debt?     @relation(fields: [debtId], references: [id])
+}
+
+model RepaymentPlan {
+  id          String    @id @default(uuid())
+  userId      String
+  name        String
+  startDate   DateTime
+  endDate     DateTime?
+  totalTarget Float
+  status      String    @default("ACTIVE") // ACTIVE, COMPLETED, CANCELLED
+  note        String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  user      User       @relation(fields: [userId], references: [id])
+  planItems PlanItem[]
+}
+
+model PlanItem {
+  id            String @id @default(uuid())
+  planId        String
+  debtId        String
+  monthlyAmount Float
+  priority      Int
+  note          String?
+
+  plan RepaymentPlan @relation(fields: [planId], references: [id])
+  debt Debt          @relation(fields: [debtId], references: [id])
+}
+
+model Budget {
+  id          String   @id @default(uuid())
+  userId      String
+  year        Int
+  month       Int
+  categoryId  String
+  limitAmount Float
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user     User     @relation(fields: [userId], references: [id])
+  category Category @relation(fields: [categoryId], references: [id])
+
+  @@unique([userId, year, month, categoryId])
+}
+
+model Notification {
+  id            String   @id @default(uuid())
+  recipientId   String
+  type          String
+  title         String
+  message       String
+  referenceType String?
+  referenceId   String?
+  isRead        Boolean  @default(false)
+  emailSent     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+
+  recipient User @relation(fields: [recipientId], references: [id])
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  userId     String
+  action     String
+  targetType String
+  targetId   String
+  detail     String?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}

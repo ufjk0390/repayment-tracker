@@ -1,0 +1,64 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Build outputs
+dist/
+build/
+**/dist/
+**/build/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+**/.env
+!**/.env.example
+
+# Database
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+**/prisma/dev.db*
+**/prisma/migrations/dev/
+
+# Uploads
+uploads/
+**/uploads/
+!**/uploads/.gitkeep
+
+# Logs
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Editor / OS
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Test artifacts
+coverage/
+.nyc_output/
+test.jpg
+test.exe
+test_upload.*
+
+# Temporary
+*.tmp
+*.temp
+.cache/
+
+# Claude Code local config (keep project-level launch.json if desired)
+# .claude/
+
+# Secrets
+*.pem
+*.key
+!**/package-lock.json
