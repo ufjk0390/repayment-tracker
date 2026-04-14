@@ -1,5 +1,8 @@
 # 富盛典藏 / Repayment Tracker
 
+[![CI](https://github.com/ufjk0390/repayment-tracker/actions/workflows/ci.yml/badge.svg)](https://github.com/ufjk0390/repayment-tracker/actions/workflows/ci.yml)
+[![Tests](https://img.shields.io/badge/tests-52%2F52-brightgreen)](https://github.com/ufjk0390/repayment-tracker/actions)
+
 還款記帳網站 — 協助特定對象改善經濟狀況，透過「當事人記帳 + 監督人核實」的雙角色機制建立財務紀律。
 
 ## 功能
