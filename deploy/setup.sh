@@ -33,10 +33,8 @@ else
   echo "[4/7] PM2 已安裝"
 fi
 
-# 5. 建立應用目錄與使用者
-echo "[5/7] 建立目錄結構..."
-mkdir -p /var/www/fusheng
-mkdir -p /var/www/fusheng/data
+# 5. 建立日誌目錄（不建 /var/www/fusheng 以便 git clone 能用）
+echo "[5/7] 建立日誌目錄..."
 mkdir -p /var/log/fusheng
 
 # 6. 防火牆設定
@@ -45,11 +43,31 @@ ufw allow OpenSSH
 ufw allow 'Nginx Full'
 ufw --force enable
 
-# 7. Clone 專案
-echo "[7/7] Clone 專案..."
-if [ ! -d /var/www/fusheng/.git ]; then
-  git clone https://github.com/ufjk0390/repayment-tracker.git /var/www/fusheng
+# 7. Clone 或初始化專案
+echo "[7/7] Clone / 初始化專案..."
+REPO_URL="https://github.com/ufjk0390/repayment-tracker.git"
+APP_DIR="/var/www/fusheng"
+
+if [ -d "$APP_DIR/.git" ]; then
+  echo "  專案已存在，略過 clone"
+elif [ -d "$APP_DIR" ] && [ "$(ls -A "$APP_DIR" 2>/dev/null)" ]; then
+  # 目錄已存在但非 git repo，用 init + fetch 方式接管
+  echo "  目錄已存在但非 git repo，執行 init + fetch..."
+  cd "$APP_DIR"
+  git init -q
+  git remote add origin "$REPO_URL" 2>/dev/null || git remote set-url origin "$REPO_URL"
+  git fetch origin main
+  git reset --hard origin/main
+  git branch -M main
+  git branch --set-upstream-to=origin/main main 2>/dev/null || true
+else
+  # 全新 clone
+  mkdir -p /var/www
+  git clone "$REPO_URL" "$APP_DIR"
 fi
+
+# 確保 data 目錄存在（clone 之後建立才不會影響 git clone）
+mkdir -p "$APP_DIR/data"
 
 echo ""
 echo "=== 初始設定完成 ==="
