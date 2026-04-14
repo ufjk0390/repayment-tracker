@@ -1,5 +1,6 @@
 #!/bin/bash
-cd D:/Claude/repayment-tracker/server
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR/server"
 pkill -f "node src/index.js" 2>/dev/null
 sleep 1
 node src/index.js &
@@ -130,7 +131,7 @@ R=$(curl -s -o /dev/null -w "%{http_code}" -X POST $BASE/upload -H "Authorizatio
 check "P3-04" "Upload no file" "400" "$R"
 
 # P3-05 Upload jpg
-cd D:/Claude/repayment-tracker
+cd "$SCRIPT_DIR"
 echo -n "fake-jpg-content" > test_upload.jpg
 R=$(curl -s -o /dev/null -w "%{http_code}" -X POST http://127.0.0.1:3001/api/v1/upload -H "Authorization: Bearer $UT" -F "file=@test_upload.jpg;type=image/jpeg")
 check "P3-05" "Upload jpg" "201" "$R"
@@ -141,7 +142,7 @@ echo -n "fake-exe" > test_upload.exe
 R=$(curl -s -o /dev/null -w "%{http_code}" -X POST http://127.0.0.1:3001/api/v1/upload -H "Authorization: Bearer $UT" -F "file=@test_upload.exe;type=application/octet-stream")
 check "P3-06" "Upload disallowed type" "400" "$R"
 rm -f test_upload.exe
-cd D:/Claude/repayment-tracker/server
+cd "$SCRIPT_DIR/server"
 
 # === Phase 2: Atomic optimistic lock ===
 # Create a transaction

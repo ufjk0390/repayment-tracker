@@ -1,5 +1,6 @@
 #!/bin/bash
-cd D:/Claude/repayment-tracker/server
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR/server"
 
 # Kill any existing server
 pkill -f "node src/index.js" 2>/dev/null

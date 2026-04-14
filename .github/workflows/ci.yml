@@ -1,0 +1,82 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend:
+    name: Backend QA
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: server/package-lock.json
+
+      - name: Install backend deps
+        working-directory: server
+        run: npm ci
+
+      - name: Setup env
+        working-directory: server
+        run: |
+          cat > .env <<EOF
+          DATABASE_URL="file:./dev.db"
+          JWT_SECRET="ci-test-jwt-secret-at-least-32-chars-long"
+          JWT_REFRESH_SECRET="ci-test-refresh-secret"
+          PORT=3001
+          NODE_ENV=development
+          EOF
+
+      - name: Generate Prisma client & push schema
+        working-directory: server
+        run: |
+          npx prisma generate
+          npx prisma db push --force-reset
+          node prisma/seed.js
+
+      - name: Run Phase 1 regression tests
+        run: bash run-qa.sh
+
+      - name: Reset DB for Phase 2-4
+        working-directory: server
+        run: |
+          rm -f prisma/dev.db
+          npx prisma db push --force-reset
+          node prisma/seed.js
+
+      - name: Run Phase 2-4 feature tests
+        run: bash run-qa-phase234.sh
+
+  frontend:
+    name: Frontend Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: client/package-lock.json
+
+      - name: Install frontend deps
+        working-directory: client
+        run: npm ci
+
+      - name: Lint
+        working-directory: client
+        run: npm run lint
+        continue-on-error: true
+
+      - name: Build
+        working-directory: client
+        run: npm run build
