@@ -1,8 +1,15 @@
 import axios from 'axios';
 import useAuthStore from '../stores/authStore';
 
+// API base URL: configurable via VITE_API_BASE_URL env var
+// - Dev fallback: http://localhost:3001/api/v1 (backend on different port)
+// - Prod fallback: /api/v1 (same origin, Nginx proxies to backend)
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ||
+  (import.meta.env.DEV ? 'http://localhost:3001/api/v1' : '/api/v1');
+
 const api = axios.create({
-  baseURL: 'http://localhost:3001/api/v1',
+  baseURL: API_BASE_URL,
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
@@ -53,7 +60,7 @@ api.interceptors.response.use(
 
       try {
         const { data } = await axios.post(
-          'http://localhost:3001/api/v1/auth/refresh',
+          `${API_BASE_URL}/auth/refresh`,
           {},
           { withCredentials: true }
         );

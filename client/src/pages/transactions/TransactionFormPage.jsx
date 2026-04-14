@@ -264,7 +264,7 @@ export default function TransactionFormPage() {
             {form.attachmentUrl ? (
               <div className="flex items-center gap-2">
                 <a
-                  href={`http://localhost:3001${form.attachmentUrl}`}
+                  href={import.meta.env.DEV ? `http://localhost:3001${form.attachmentUrl}` : form.attachmentUrl}
                   target="_blank"
                   rel="noreferrer"
                   className="text-sm text-indigo-600 hover:underline"
