@@ -10,6 +10,7 @@ import {
   AlertCircle,
   Copy,
   Link2,
+  Clock,
 } from 'lucide-react';
 import Card, { CardTitle } from '../../components/ui/Card';
 import Badge from '../../components/ui/Badge';
@@ -19,6 +20,7 @@ import ProgressBar from '../../components/ui/ProgressBar';
 import EmptyState from '../../components/ui/EmptyState';
 import MonthlyBarChart from '../../components/charts/MonthlyBarChart';
 import { getDashboardSummary, getPairing, createInvite } from '../../services/api';
+import { formatDateTime } from '../../utils/format';
 import { formatCurrency, formatDate } from '../../utils/format';
 import { STATUS_LABELS, STATUS_COLORS, TYPE_LABELS, TYPE_COLORS } from '../../utils/constants';
 
@@ -43,28 +45,36 @@ export default function SupervisorDashboard() {
       const code = res.data?.data?.inviteCode;
       setGeneratedCode(code);
       toast.success('邀請碼已產生');
+      queryClient.invalidateQueries({ queryKey: ['pairing'] });
     },
     onError: (err) => {
       toast.error(err.response?.data?.error?.message || '產生邀請碼失敗');
     },
   });
 
-  const copyCode = () => {
-    navigator.clipboard.writeText(generatedCode);
-    toast.success('已複製邀請碼');
-  };
-
   if (isLoading) return <Loading />;
 
   const summary = summaryData?.data || {};
   const pairing = pairingData?.data;
-  const isPaired = !!pairing?.id;
+  const isActive = pairing?.status === 'ACTIVE';
+  const isPending = pairing?.status === 'PENDING';
+  const noPairing = !pairing;
+
+  // Use invite code from DB (persists across refresh), or from mutation response
+  const inviteCode = pairing?.inviteCode || generatedCode;
+
+  const copyCode = () => {
+    if (!inviteCode) return;
+    navigator.clipboard.writeText(inviteCode);
+    toast.success('已複製邀請碼');
+  };
 
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold text-gray-900">監督人儀表板</h1>
 
-      {!isPaired && (
+      {/* 尚未配對：顯示產生邀請碼按鈕 */}
+      {noPairing && (
         <Card className="border-indigo-200 bg-indigo-50">
           <div className="flex items-start gap-3">
             <Link2 className="h-5 w-5 text-indigo-600 mt-0.5 flex-shrink-0" />
@@ -73,34 +83,67 @@ export default function SupervisorDashboard() {
               <p className="text-sm text-indigo-700 mt-1 mb-3">
                 產生邀請碼並提供給當事人完成配對
               </p>
-              <div className="flex items-center gap-2">
-                <Button
-                  onClick={() => inviteMutation.mutate()}
-                  loading={inviteMutation.isPending}
-                  size="sm"
-                >
-                  產生邀請碼
-                </Button>
-                {generatedCode && (
-                  <div className="flex items-center gap-2 bg-white rounded-lg px-3 py-1.5 border border-indigo-200">
-                    <code className="text-sm font-mono font-bold text-indigo-700">
-                      {generatedCode}
-                    </code>
-                    <button
-                      onClick={copyCode}
-                      className="text-indigo-500 hover:text-indigo-700"
-                    >
-                      <Copy className="h-4 w-4" />
-                    </button>
-                  </div>
-                )}
-              </div>
+              <Button
+                onClick={() => inviteMutation.mutate()}
+                loading={inviteMutation.isPending}
+                size="sm"
+              >
+                產生邀請碼
+              </Button>
             </div>
           </div>
         </Card>
       )}
 
-      {isPaired && (
+      {/* 配對中（PENDING）：持續顯示邀請碼 */}
+      {isPending && (
+        <Card className="border-yellow-200 bg-yellow-50">
+          <div className="flex items-start gap-3">
+            <Clock className="h-5 w-5 text-yellow-600 mt-0.5 flex-shrink-0" />
+            <div className="flex-1">
+              <h3 className="font-semibold text-yellow-800">等待當事人配對</h3>
+              <p className="text-sm text-yellow-700 mt-1 mb-3">
+                請將以下邀請碼提供給當事人，對方輸入後即完成配對
+              </p>
+              <div className="flex items-center gap-2 mb-3">
+                <code className="text-2xl font-mono font-bold text-yellow-900 bg-white rounded-lg px-4 py-2 tracking-widest border border-yellow-200">
+                  {inviteCode}
+                </code>
+                <button
+                  onClick={copyCode}
+                  className="p-2 rounded-lg bg-yellow-100 hover:bg-yellow-200 text-yellow-700"
+                  title="複製邀請碼"
+                >
+                  <Copy className="h-5 w-5" />
+                </button>
+              </div>
+              {pairing?.expiresAt && (
+                <div className="flex items-center gap-1 text-xs text-yellow-700">
+                  <Clock className="h-3 w-3" />
+                  <span>
+                    有效期限：{formatDateTime(pairing.expiresAt)}
+                    {pairing.expired && (
+                      <span className="ml-2 text-red-600 font-semibold">（已過期）</span>
+                    )}
+                  </span>
+                </div>
+              )}
+              {pairing?.expired && (
+                <Button
+                  size="sm"
+                  className="mt-3"
+                  onClick={() => inviteMutation.mutate()}
+                  loading={inviteMutation.isPending}
+                >
+                  重新產生邀請碼
+                </Button>
+              )}
+            </div>
+          </div>
+        </Card>
+      )}
+
+      {isActive && (
         <>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <Card className="border-yellow-200 bg-yellow-50 md:col-span-1">
