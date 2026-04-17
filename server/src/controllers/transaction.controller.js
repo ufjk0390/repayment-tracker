@@ -79,7 +79,7 @@ export async function create(req, res, next) {
       return res.status(403).json({
         error: {
           code: 'AUTH_FORBIDDEN',
-          message: 'Only users can create transactions',
+          message: '此操作僅限當事人。監督人無法新增交易紀錄',
         },
       });
     }
@@ -216,7 +216,7 @@ export async function update(req, res, next) {
       return res.status(403).json({
         error: {
           code: 'AUTH_FORBIDDEN',
-          message: 'Only users can update transactions',
+          message: '此操作僅限當事人。監督人無法編輯交易紀錄',
         },
       });
     }
@@ -298,7 +298,7 @@ export async function remove(req, res, next) {
       return res.status(403).json({
         error: {
           code: 'AUTH_FORBIDDEN',
-          message: 'Only users can delete transactions',
+          message: '此操作僅限當事人。監督人無法刪除交易紀錄',
         },
       });
     }
@@ -341,7 +341,7 @@ export async function review(req, res, next) {
       return res.status(403).json({
         error: {
           code: 'AUTH_FORBIDDEN',
-          message: 'Only supervisors can review transactions',
+          message: '此操作僅限監督人。當事人無法審核交易紀錄',
         },
       });
     }
@@ -507,7 +507,7 @@ export async function batchReview(req, res, next) {
       return res.status(403).json({
         error: {
           code: 'AUTH_FORBIDDEN',
-          message: 'Only supervisors can review transactions',
+          message: '此操作僅限監督人。當事人無法審核交易紀錄',
         },
       });
     }

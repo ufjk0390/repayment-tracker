@@ -19,7 +19,7 @@ export async function invite(req, res, next) {
       return res.status(403).json({
         error: {
           code: 'PAIRING_NOT_SUPERVISOR',
-          message: 'Only supervisors can create invitations',
+          message: '此操作僅限監督人。當事人無法產生邀請碼',
         },
       });
     }
@@ -69,7 +69,7 @@ export async function join(req, res, next) {
       return res.status(403).json({
         error: {
           code: 'PAIRING_NOT_USER',
-          message: 'Only users can join a pairing',
+          message: '此操作僅限當事人。監督人無法輸入邀請碼配對',
         },
       });
     }

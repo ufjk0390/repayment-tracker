@@ -34,7 +34,7 @@ export async function create(req, res, next) {
       return res.status(403).json({
         error: {
           code: 'AUTH_FORBIDDEN',
-          message: 'Only users can create debts',
+          message: '此操作僅限當事人。監督人無法新增債務',
         },
       });
     }
@@ -117,7 +117,7 @@ export async function update(req, res, next) {
       return res.status(403).json({
         error: {
           code: 'AUTH_FORBIDDEN',
-          message: 'Only users can update debts',
+          message: '此操作僅限當事人。監督人無法編輯債務',
         },
       });
     }
@@ -172,7 +172,7 @@ export async function remove(req, res, next) {
       return res.status(403).json({
         error: {
           code: 'AUTH_FORBIDDEN',
-          message: 'Only users can delete debts',
+          message: '此操作僅限當事人。監督人無法刪除債務',
         },
       });
     }

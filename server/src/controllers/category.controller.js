@@ -24,7 +24,7 @@ export async function create(req, res, next) {
       return res.status(403).json({
         error: {
           code: 'AUTH_FORBIDDEN',
-          message: 'Only users can create custom categories',
+          message: '此操作僅限當事人',
         },
       });
     }
