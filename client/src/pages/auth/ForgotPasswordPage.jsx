@@ -74,11 +74,19 @@ export default function ForgotPasswordPage() {
         發送重設連結
       </Button>
 
-      <p className="text-center text-sm text-gray-500">
-        <Link to="/login" className="text-indigo-600 hover:text-indigo-500 font-medium">
-          返回登入
-        </Link>
-      </p>
+      <div className="text-center text-sm text-gray-500 space-y-2">
+        <p>
+          已有重設 Token？{' '}
+          <Link to="/reset-password" className="text-indigo-600 hover:text-indigo-500 font-medium">
+            前往重設密碼
+          </Link>
+        </p>
+        <p>
+          <Link to="/login" className="text-indigo-600 hover:text-indigo-500 font-medium">
+            返回登入
+          </Link>
+        </p>
+      </div>
     </form>
   );
 }
