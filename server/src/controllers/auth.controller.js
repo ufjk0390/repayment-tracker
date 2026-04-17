@@ -2,6 +2,7 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import prisma from '../lib/prisma.js';
+import { sendPasswordResetEmail } from '../services/email.service.js';
 
 function generateAccessToken(user) {
   return jwt.sign(
@@ -236,11 +237,19 @@ export async function forgotPassword(req, res, next) {
       data: { resetToken, resetTokenExpiresAt: expiresAt },
     });
 
-    // In production: send email with reset link
-    // For development: return token in response (REMOVE in production)
+    // Send password reset email
+    const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+    try {
+      await sendPasswordResetEmail(user.email, resetToken, clientUrl);
+    } catch (emailErr) {
+      console.error('[forgotPassword] Email send failed:', emailErr.message);
+      // Don't fail the request even if email fails
+    }
+
     res.json({
       data: {
         message: 'If the account exists, a reset link has been sent',
+        // Dev mode: also return token in response for testing
         ...(process.env.NODE_ENV === 'development' && { devToken: resetToken }),
       },
     });
