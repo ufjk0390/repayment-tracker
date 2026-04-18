@@ -70,8 +70,10 @@ export default function TransactionFormPage() {
   const categories = categoriesData?.data?.categories || categoriesData?.data || [];
   const debts = debtsData?.data?.debts || debtsData?.data || [];
 
+  // REPAYMENT transactions use EXPENSE categories (還款本質上是一種支出)
+  const categoryTypeForFilter = form.type === 'REPAYMENT' ? 'EXPENSE' : form.type;
   const filteredCategories = categories
-    .filter((c) => c.type === form.type)
+    .filter((c) => c.type === categoryTypeForFilter)
     .map((c) => ({ value: c.id.toString(), label: c.name }));
 
   const debtOptions = debts
@@ -201,9 +203,20 @@ export default function TransactionFormPage() {
             options={TRANSACTION_TYPES}
             value={form.type}
             onChange={(e) => {
-              update('type', e.target.value);
-              update('categoryId', '');
-              update('debtId', '');
+              const newType = e.target.value;
+              const oldType = form.type;
+              update('type', newType);
+              // 只在切換到不同分類組別時才清空 categoryId
+              // REPAYMENT 和 EXPENSE 共用支出分類，切換時保留
+              const oldGroup = oldType === 'REPAYMENT' ? 'EXPENSE' : oldType;
+              const newGroup = newType === 'REPAYMENT' ? 'EXPENSE' : newType;
+              if (oldGroup !== newGroup) {
+                update('categoryId', '');
+              }
+              // 切離 REPAYMENT 時清空 debtId
+              if (newType !== 'REPAYMENT') {
+                update('debtId', '');
+              }
             }}
             error={errors.type}
             disabled={isApproved}
