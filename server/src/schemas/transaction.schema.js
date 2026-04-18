@@ -1,6 +1,26 @@
 import { z } from 'zod';
 import { positiveFloat, dateString } from './common.schema.js';
 
+// Accepts either a full URL (https://...) or a relative path (/uploads/...)
+const attachmentUrlSchema = z.string()
+  .refine(
+    (val) => {
+      if (!val) return true;
+      // Allow relative paths starting with /
+      if (val.startsWith('/')) return true;
+      // Allow full URLs
+      try {
+        new URL(val);
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    { message: '附件路徑格式不正確' }
+  )
+  .optional()
+  .nullable();
+
 export const createTransactionSchema = z.object({
   date: dateString,
   type: z.enum(['INCOME', 'EXPENSE', 'REPAYMENT']),
@@ -8,7 +28,7 @@ export const createTransactionSchema = z.object({
   categoryId: z.string().min(1, 'Category is required'),
   debtId: z.string().optional().nullable(),
   description: z.string().max(500).optional(),
-  attachmentUrl: z.string().url().optional().nullable(),
+  attachmentUrl: attachmentUrlSchema,
 }).refine(
   (data) => {
     if (data.type === 'REPAYMENT' && !data.debtId) {
@@ -26,7 +46,7 @@ export const updateTransactionSchema = z.object({
   categoryId: z.string().min(1).optional(),
   debtId: z.string().optional().nullable(),
   description: z.string().max(500).optional().nullable(),
-  attachmentUrl: z.string().url().optional().nullable(),
+  attachmentUrl: attachmentUrlSchema,
   version: z.number().int().positive('Version is required for optimistic locking'),
 }).refine(
   (data) => {
